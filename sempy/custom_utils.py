@@ -114,7 +114,7 @@ def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
     def update_labels():
         workspace_label.value = f"<b style='font-size:14px'>🗂️ Workspaces</b> ({get_workspace_count()})"
         dataset_label.value = f"<b style='font-size:14px'>📅 Semantic Models</b> ({get_dataset_count()})  <span style='color:gray; font-size:12px;'>(Updates based on workspace selection)</span>"
-        tables_label.value = f"<b style='font-size:14px'>𝄜 Tables</b> ({get_tables_count()}/{get_tables_total()}) <span style='color:gray; font-size:12px;'>(Hold Ctrl/Cmd to select multiple)</span>"
+        tables_label.value = f"<b style='font-size:14px'>𝄜 Tables</b> ({get_tables_count()}/{get_tables_total()}) <span style='color:gray; font-size:12px;'>(Hold Ctrl/Cmd to select multiple) (Updates based on model selection)</span>"
         partitions_label.value = f"<b style='font-size:14px'>🧩 Partitions</b> ({get_partitions_count()}/{get_partitions_total()}) <span style='color:gray; font-size:12px;'>(Updates based on table selection)</span>"
 
     #  Helpers
@@ -411,3 +411,4 @@ def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
         status_out
     ])
     return display(app)
+
