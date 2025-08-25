@@ -28,6 +28,7 @@ def get_model_details(load_from_lakehouse: bool,table_name: str,workspace_list: 
                 result_df = result_df[(result_df["Workspace Name"].isin(workspace_list)) & (result_df['Workspace Flag']==True)]
             elif workspace_list and not only_premium_ws:
                 result_df = result_df[result_df["Workspace Name"].isin(workspace_list)]
+            print(f"✅ Found {len(result_df['Dataset Id'].unique())} models info from {len(result_df['Workspace Id'].unique())} workspaces")
         except:
             result_df = pd.DataFrame()
             print('🔴 Please attach a lakehouse or Table with mentioned name not found, if running for the first time set load_from_lakehouse to False')
@@ -58,7 +59,7 @@ def get_model_details(load_from_lakehouse: bool,table_name: str,workspace_list: 
         partitions_df = pd.concat(dataset_partitions,ignore_index=True)
         result_df = datasets_df.merge(partitions_df,on='Dataset Id', how='inner')
         write_deltalake(table_path, result_df, mode='overwrite') #write the dataframe to a lakehouse table
-        print(f"✅ Extracted {len(result_df['Dataset Id'].unique())} datasets info across {len(result_df['Workspace Id'].unique())} workspaces")
+        print(f"✅ Extracted {len(result_df['Dataset Id'].unique())} models info across {len(result_df['Workspace Id'].unique())} workspaces")
         print(f"🟢 '{table_name}' table saved to the Lakehouse")
     return result_df
 
@@ -267,11 +268,34 @@ def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
             if not ws_id or not ds_id:
                 display(HTML(f"<div style='color:red; font-weight:bold;'>✖ Could not resolve ID for <b>{ws_name}/{ds_name}</b>.</div>"))
                 return
-            params = { "workspace": ws_id, "dataset": ds_id, "tables": list(tables_ms.value) or None, "partitions": list(partitions_ms.value) or None,
-                "refresh_type": refresh_type_dd.value,"retry_count": retry_count_is.value,"apply_refresh_policy": apply_policy_cb.value,
-                "max_parallelism": max_parallelism_is.value,"commit_mode": commit_mode_dd.value,"visualize": visualize_cb.value }
+            params = { 
+                "workspace": ws_id, 
+                "dataset": ds_id, 
+                "tables": list(tables_ms.value) or None, 
+                "partitions": list(partitions_ms.value) or None,
+                "refresh_type": refresh_type_dd.value,
+                "retry_count": retry_count_is.value,
+                "apply_refresh_policy": apply_policy_cb.value,
+                "max_parallelism": max_parallelism_is.value,
+                "commit_mode": commit_mode_dd.value,
+                "visualize": visualize_cb.value 
+            }
             try:
-                _output= refresh_semantic_model(**params)
+                # Remove tables from tables_ms if their name appears in any selected partition string
+                selected_tables = list(tables_ms.value)
+                selected_partitions = list(partitions_ms.value)
+                # Extract table names from partition strings of the form "'TableName'[PartitionName]"
+                partition_table_names = set()
+                for p in selected_partitions:
+                    if isinstance(p, str) and p.startswith("'"):
+                        tbl = p.split("'")[1]
+                        partition_table_names.add(tbl)
+                # Remove tables that are present in partition_table_names
+                filtered_tables = [t for t in selected_tables if t not in partition_table_names]
+                params["tables"] = filtered_tables or None
+                # display(params["tables"])
+                # display(selected_partitions)
+                _output = refresh_semantic_model(**params)
                 display(_output)
             except Exception as e:
                 display(HTML(f"<div style='color:red;'> {e}</div>"))
@@ -386,26 +410,4 @@ def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
         )),
         status_out
     ])
-    # app = widgets.VBox([
-    #     widgets.HTML(html_content),
-    #     widgets.VBox([
-    #         widgets.HBox([
-    #             create_section(workspace_label, workspace_dd, search_widget=workspace_search),
-    #             create_section(dataset_label, dataset_dd, search_widget=dataset_search)]),
-    #         widgets.HTML("<hr style='border-top: 1px solid #e0e0e0; margin: 16px 0;'>"),
-    #         widgets.HBox([
-    #             create_section(
-    #                 tables_label, 
-    #                 tables_ms, search_widget=table_search ),
-    #             create_section(
-    #                 partitions_label, 
-    #                 partitions_ms, search_widget=partition_search)] ),
-    #         widgets.HTML("<hr style='border-top: 1px solid #e0e0e0; margin: 16px 0;'>"),
-    #         widgets.Accordion(children=[
-    #             widgets.HBox([
-    #                 widgets.VBox([refresh_type_dd, retry_count_is, apply_policy_cb]),
-    #                 widgets.VBox([max_parallelism_is, commit_mode_dd, visualize_cb])])], titles=("⚙️ Advanced Settings",)),
-    #         widgets.HBox([refresh_btn], layout=widgets.Layout(justify_content="center", margin="20px 0 0 0"))], 
-    #         layout=widgets.Layout(border='1px solid #e0e0e0', border_radius='16px', padding='24px', background_color='#fcfcfc', box_shadow='0 4px 12px rgba(0,0,0,0.05)')),
-    #     status_out])
     return display(app)
