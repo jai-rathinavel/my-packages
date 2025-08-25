@@ -66,7 +66,19 @@ def get_model_details(load_from_lakehouse: bool,table_name: str,workspace_list: 
 def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
     """
     Launches an interactive, enhanced UI for refreshing semantic models.
-    Displays selected count next to workspaces, datasets, tables, and partitions.
+    This function creates a user interface for selecting workspaces, datasets, tables, and partitions from the provided DataFrame.
+    It allows users to configure advanced refresh options such as refresh type, retry count, parallelism, commit mode, and policy application.
+    The UI supports search and filtering of all artifacts and dynamically updates available options based on user selections.
+    Upon triggering the refresh, the function leverages sempy_labs under the hood to trigger and trace the refresh activities.
+    Parameters
+    ----------
+    input_df : pandas.DataFrame
+        A DataFrame containing at least the columns: "Workspace Name", "Workspace Id", "Dataset Name", "Dataset Id", "Table Name", and "Partition Name".
+        This DataFrame is used to populate the dropdowns and selection widgets in the UI.
+    Returns
+    -------
+    None
+        Displays the interactive UI in a Notebook environment.
     """
     # Core Widgets
     workspace_search = widgets.Text(placeholder="Search workspaces...", layout=widgets.Layout(width="100%", margin='0 0 4px 0'))
@@ -329,3 +341,4 @@ def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
             layout=widgets.Layout(border='1px solid #e0e0e0', border_radius='16px', padding='24px', background_color='#fcfcfc', box_shadow='0 4px 12px rgba(0,0,0,0.05)')),
         status_out])
     return display(app)
+
