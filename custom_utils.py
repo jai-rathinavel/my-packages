@@ -274,7 +274,7 @@ def launch_enhanced_refresh_ui(input_df, show_author: bool = True):
                 _output= refresh_semantic_model(**params)
                 display(_output)
             except Exception as e:
-                display(HTML(f"<div style='color:red; font-weight:bold;'>✖ Refresh Failed: {e}</div>"))
+                display(HTML(f"<div style='color:red;'> {e}</div>"))
 
     refresh_btn.on_click(do_refresh)
     on_workspace_change() # Initialize dataset dropdown
